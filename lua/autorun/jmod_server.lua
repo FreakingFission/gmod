@@ -6,6 +6,7 @@ if(SERVER)then
 	util.AddNetworkString("JMod_EZbuildKit")
 	util.AddNetworkString("JMod_EZworkbench")
 	util.AddNetworkString("JMod_Hint")
+	util.AddNetworkString("JMod_Notify")
 	util.AddNetworkString("JMod_EZtimeBomb")
 	util.AddNetworkString("JMod_UniCrate")
 	util.AddNetworkString("JMod_EZarmorSync")

@@ -1943,6 +1943,22 @@ function JMod_Hint(ply,...)
 		end
 	end
 end
+function JMod_Notify(ply,msg,typ,tim)
+
+	if(CLIENT)then return end
+
+	ply.NextJModNotify = ply.NextJModNotify or 0
+
+	if(ply.NextJModNotify > CurTime()) then return end
+
+	ply.NextJModNotify = CurTime() + 1
+
+	net.Start("JMod_Notify")
+		net.WriteString(msg)
+		net.WriteInt(typ or NOTIFY_HINT)
+		net.WriteInt(tim or 5)
+	net.Send(ply)
+end
 --
 hook.Add("EntityFireBullets","JMOD_ENTFIREBULLETS",function(ent,data)
 	if(IsValid(JMOD_BLACK_HOLE))then

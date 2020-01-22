@@ -27,15 +27,16 @@ if(SERVER)then
 	end
 	function ENT:Initialize()
 		self.Specs=JMod_ArmorTable[self.Slot][self.ArmorName]
-		self.Entity:SetModel(self.Specs.mdl)
-		self.Entity:SetMaterial(self.Specs.mat or "")
-		--self.Entity:PhysicsInitBox(Vector(-10,-10,-10),Vector(10,10,10))
+		self:SetModel(self.Specs.mdl)
+		self:SetMaterial(self.Specs.mat or "")
+		--self:PhysicsInitBox(Vector(-10,-10,-10),Vector(10,10,10))
 		if((self.ModelScale)and not(self.Specs.gayPhysics))then self:SetModelScale(self.ModelScale) end
-		self.Entity:PhysicsInit(SOLID_VPHYSICS)
-		self.Entity:SetMoveType(MOVETYPE_VPHYSICS)
-		self.Entity:SetSolid(SOLID_VPHYSICS)
-		self.Entity:DrawShadow(true)
-		self.Entity:SetUseType(SIMPLE_USE)
+		self:PhysicsInit(SOLID_VPHYSICS)
+		self:SetMoveType(MOVETYPE_VPHYSICS)
+		self:SetSolid(SOLID_VPHYSICS)
+		self:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+		self:DrawShadow(true)
+		self:SetUseType(SIMPLE_USE)
 		self:GetPhysicsObject():SetMass(10)
 		self.Durability=self.Durability or self.Specs.dur
 		---

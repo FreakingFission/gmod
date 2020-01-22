@@ -1037,7 +1037,10 @@ if(CLIENT)then
 		
 	end)
 	net.Receive("JMod_Hint",function()
-		notification.AddLegacy(net.ReadString(),NOTIFY_HINT,5)
+		notification.AddLegacy(net.ReadString(), NOTIFY_HINT, 5)
+	end)
+	net.Receive("JMod_Notify",function()
+		notification.AddLegacy(net.ReadString(), net.ReadInt() or NOTIFY_HINT, net.ReadInt() or 5)
 	end)
 	net.Receive("JMod_UniCrate",function()
 		local box=net.ReadEntity()
