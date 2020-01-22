@@ -6,21 +6,6 @@ ENT.Category = "JMod - EZ Misc."
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
 
-ENT.ArmorPos = {
-	Face 			= {Vector(0,-2,22), 		Angle(-100,-180,-90)},
-	Head 			= {Vector(-1,0,20), 		Angle(90,0,90)},
-	Torso			= {Vector(3,5,0), 	Angle(90,0,-90)},
-	Pelvis 			= {Vector(0,0,0), 		Angle(0,0,0)},
-	LeftShoulder 	= {Vector(-10,0,20), 	Angle(0,0,0)},
-	RightShoulder 	= {Vector(10,0,20), 	Angle(0,0,0)},
-	LeftForearm 	= {Vector(-15,0,10), 	Angle(0,0,0)},
-	RightForearm 	= {Vector(15,0,10), 	Angle(0,0,0)},
-	LeftThigh 		= {Vector(-10,0,-15), 	Angle(0,0,0)},
-	RightThigh 		= {Vector(10,0,-15), 	Angle(0,0,0)},
-	LeftCalf 		= {Vector(-10,0,-25), 	Angle(0,0,0)},
-	RightCalf 		= {Vector(10,0,-25), 	Angle(0,0,0)}
-}
-
 ENT.ArmorTbl = {}
 
 if SERVER then
@@ -71,31 +56,24 @@ if SERVER then
 		
 		if not activator:KeyDown(IN_WALK) then
 			
-			print("About to store armor")
-			--PrintTable(activator.EZarmor.slots)
 			for k, v in pairs(activator.EZarmor.slots) do
 				if not self.ArmorTbl[k] then
-					print("Put in armor " .. activator.EZarmor.slots[k][1] .. " of type " .. k)
 					self.ArmorTbl[k] = activator.EZarmor.slots[k]
 					activator.EZarmor.slots[k] = nil
 				end
 			end
-
-			JModEZarmorSync(activator)
+			JMod_EZ_Update_Armor(activator)
 			self:ArmorUpdate()
 
 		else
 
-			print("About to retrieve armor")
-			--PrintTable(self.ArmorTbl)
 			for k, v in pairs(self.ArmorTbl) do
 				if not activator.EZarmor.slots[k] then
-					print("Grabbed armor " .. self.ArmorTbl[k][1] .. " of slot " .. k)
 					activator.EZarmor.slots[k] = self.ArmorTbl[k]
 					self.ArmorTbl[k] = nil
 				end
 			end
-			JModEZarmorSync(activator)
+			JMod_EZ_Update_Armor(activator)
 			self:ArmorUpdate()
 
 		end
@@ -104,7 +82,23 @@ if SERVER then
 
 elseif CLIENT then
 
+	local EZarmorBoneTable={
+		Torso="ValveBiped.Bip01_Spine2",
+		Head="ValveBiped.Bip01_Head1",
+		LeftShoulder="ValveBiped.Bip01_L_UpperArm",
+		RightShoulder="ValveBiped.Bip01_R_UpperArm",
+		LeftForearm="ValveBiped.Bip01_L_Forearm",
+		RightForearm="ValveBiped.Bip01_R_Forearm",
+		LeftThigh="ValveBiped.Bip01_L_Thigh",
+		RightThigh="ValveBiped.Bip01_R_Thigh",
+		LeftCalf="ValveBiped.Bip01_L_Calf",
+		RightCalf="ValveBiped.Bip01_R_Calf",
+		Pelvis="ValveBiped.Bip01_Pelvis",
+		Face="ValveBiped.Bip01_Head1"
+	}
+
 	ENT.ArmorCSModels = {}
+	ENT.MannequinMdl = nil
 
 	net.Receive("JMod_ArmorCloset", function()
 		local closet = net.ReadEntity()
@@ -115,37 +109,73 @@ elseif CLIENT then
 		closet.ArmorCSModels = {}
 
 		for k, v in pairs(closet.ArmorTbl) do
-
 			local globalTbl = JMod_ArmorTable[k][v[1]]
-			local localTbl = closet.ArmorPos[k]
 			local csMdl = ClientsideModel(globalTbl.mdl)
+			csMdl:SetPos(ply:GetPos())
+			csMdl:SetMaterial(globalTbl.mat or "")
+			csMdl:SetParent(closet.MannequinMdl)
+			csMdl:SetNoDraw(true) -- Handled in ENT:Draw()
 			closet.ArmorCSModels[k] = csMdl
-
-			local pos = closet:GetPos() 
-					+ closet:GetRight() 	* (localTbl[1].x + globalTbl.pos.x)
-					+ closet:GetForward() 	* (localTbl[1].y + globalTbl.pos.y)
-					+ closet:GetUp() 		* (localTbl[1].z + globalTbl.pos.z)
-
-			local ang = closet:GetAngles()
-			ang:RotateAroundAxis(closet:GetRight(),		localTbl[2].p + globalTbl.ang.p)
-			ang:RotateAroundAxis(closet:GetUp(), 	localTbl[2].y + globalTbl.ang.y)
-			ang:RotateAroundAxis(closet:GetForward(), 		localTbl[2].r + globalTbl.ang.r)
-
-			local matrix = Matrix()
-			matrix:Scale(globalTbl.siz)
-			csMdl:EnableMatrix("RenderMultiply",matrix)
-
-			csMdl:SetPos(pos)
-			csMdl:SetAngles(ang)
-			csMdl:SetColor(Color(v[3].r, v[3].g, v[3].b, v[3].a))
-
-			csMdl:SetParent(closet)
 		end
-
 	end)
+
+	function ENT:Draw()
+
+		self:DrawModel()
+
+		
+		for k, mdl in pairs(self.ArmorCSModels) do
+
+			local localTbl = self.ArmorTbl[k]
+			local globalTbl = JMod_ArmorTable[k][localTbl[1]]
+			local i = self.MannequinMdl:LookupBone(EZarmorBoneTable[k])
+
+			if i then
+
+				local pos, ang = self.MannequinMdl:GetBonePosition(i)
+				if pos and ang then
+
+					local r,f,u= ang:Right(), ang:Forward(), ang:Up()
+					pos = pos + (r*globalTbl.pos.x) + (f*globalTbl.pos.y) + (u*globalTbl.pos.z)
+					ang:RotateAroundAxis(r,globalTbl.ang.p)
+					ang:RotateAroundAxis(u,globalTbl.ang.y)
+					ang:RotateAroundAxis(f,globalTbl.ang.r)
+					mdl:SetRenderOrigin(pos)
+					mdl:SetRenderAngles(ang)
+
+					local matrix=Matrix()
+					matrix:Scale(globalTbl.siz)
+					mdl:EnableMatrix("RenderMultiply",matrix)
+
+					local OldR,OldG,OldB=render.GetColorModulation()
+					render.SetColorModulation(localTbl[3].r/255,localTbl[3].g/255,localTbl[3].b/255)
+					mdl:DrawModel()
+					render.SetColorModulation(OldR,OldG,OldB)
+
+				end
+
+			end
+
+		end
+		
+	end
+
+	function ENT:Initialize()
+		self.MannequinMdl = ClientsideModel("models/Humans/Group01/male_07.mdl")
+		self.MannequinMdl:SetMaterial("models/props_c17/FurnitureMetal001a")
+
+		local matrix = Matrix()
+		matrix:Scale(Vector(0.85, 0.85, 0.85))
+		self.MannequinMdl:EnableMatrix("RenderMultiply",matrix)
+
+		self.MannequinMdl:SetPos(self:GetPos() + Vector(0,0,-30))
+		self.MannequinMdl:SetAngles(self:GetAngles())
+		self.MannequinMdl:SetParent(self)
+	end
 
 	function ENT:OnRemove()
 		for _, v in pairs(self.ArmorCSModels) do v:Remove() end
+		if IsValid(self.MannequinMdl) then self.MannequinMdl:Remove() end
 	end
 
 end

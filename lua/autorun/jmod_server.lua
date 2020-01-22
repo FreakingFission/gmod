@@ -2065,6 +2065,10 @@ if(SERVER)then
 		CalcSpeed(ply)
 		JModEZarmorSync(ply)
 	end
+	function JMod_EZ_Update_Armor(ply) -- Simply recheck speed and sync
+		CalcSpeed(ply)
+		JModEZarmorSync(ply)
+	end
 	-- copied from Homicide
 	function JMod_BlastThatDoor(ent,vel)
 		local Moddel,Pozishun,Ayngul,Muteeriul,Skin=ent:GetModel(),ent:GetPos(),ent:GetAngles(),ent:GetMaterial(),ent:GetSkin()
