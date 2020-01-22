@@ -53,6 +53,8 @@ if SERVER then
 	end
 
 	function ENT:Use(activator, caller)
+
+		JMod_Hint(activator, "armorcloset")
 		
 		if not activator:KeyDown(IN_WALK) then
 			

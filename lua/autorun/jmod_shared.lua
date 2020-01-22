@@ -1922,7 +1922,8 @@ local Hints={
 	["supplies"]="tap supplies against to refill, tap parts against to repair",
 	["timebomb stick"]="hold E on timebomb then release E to stick the timebomb",
 	["unpackage"]="double tap ALT+E to unpackage",
-	["upgrade"]="use Build Kit to upgrade"
+	["upgrade"]="use Build Kit to upgrade",
+	["armorcloset"] = "E to store armor, ALT+E to retrieve armor"
 }
 function JMod_Hint(ply,...)
 	if(CLIENT)then return end
